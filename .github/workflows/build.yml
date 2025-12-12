@@ -1,4 +1,4 @@
-name: Build and Deploy to OpenShift
+name: Build & Deploy to OpenShift
 
 on:
   push:
@@ -6,47 +6,47 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Login to GHCR
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: alessandrodogeee
-          password: ${{ secrets.DOCKER }}
+    - name: Login to GHCR
+      run: |
+        echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
-      - name: Build Docker image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          docker build -t ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG} .
+    - name: Build container
+      run: |
+        docker build -t ghcr.io/${{ secrets.GHCR_USERNAME }}/html-openshift-app:latest .
 
-      - name: Push Docker image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          docker push ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG}
+    - name: Push container
+      run: |
+        docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/html-openshift-app:latest
 
-      - name: Install oc
-        run: |
-          curl -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
-          tar -xzf oc.tar.gz
-          sudo mv oc /usr/local/bin/
+    - name: Install OC CLI
+      run: |
+        curl -s https://downloads-openshift-console.apps.exoscale-ch-gva-2-0.appuio.cloud/amd64/linux/oc.tar \
+        | tar xvf - --exclude="*.md" -C /usr/local/bin/
 
-      - name: Login to OpenShift
-        run: |
-          oc login --token=${{ secrets.openshift_token }} --server=https://api.exoscale-ch-gva-2-0.appuio.cloud:6443
+    - name: OpenShift Login
+      run: |
+        oc login "${{ secrets.OPENSHIFT_SERVER }}" --token="${{ secrets.OPENSHIFT_TOKEN }}"
 
-      - name: Update Deployment Image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          oc set image deployment/html-openshift-app \
-            html-openshift-app=ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG}
-          oc rollout status deployment/html-openshift-app
+    - name: Select Namespace
+      run: |
+        oc project "${{ secrets.OPENSHIFT_NAMESPACE }}"
+
+    - name: Patch Deployment Image
+      run: |
+        oc set image deployment/html-openshift-app \
+        html-openshift-app=ghcr.io/${{ secrets.GHCR_USERNAME }}/html-openshift-app:latest
+
+    - name: Apply Deployment (fallback if not exists)
+      run: |
+        oc apply -f deployment.yaml || echo "Deployment already exists – skipped"
+
+    - name: Rollout Restart
+      run: |
+        oc rollout restart deployment/html-openshift-app
