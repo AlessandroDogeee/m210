@@ -35,6 +35,7 @@ jobs:
       - name: Push Docker image
         run: |
           docker push ghcr.io/alessandrodogeee/html-openshift-app:latest
+          oc apply -f deployment-file --recursive
 
       - name: Install oc
         run: |
