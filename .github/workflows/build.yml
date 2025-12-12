@@ -30,9 +30,13 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t ghcr.io/alessandrodogeee/html-openshift-app:v1 .
-          oc apply -f deployment-file --recursive
 
       # 4) Docker Image pushen
       - name: Push Docker image
         run: |
           docker push ghcr.io/alessandrodogeee/html-openshift-app:v1
+
+      - name: Restart Deployment
+        run: |
+          oc rollout restart deployment/html-openshift-app
+
