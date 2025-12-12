@@ -24,7 +24,7 @@ jobs:
         with:
           registry: ghcr.io
           username: alessandrodogeee   # dein GitHub Username
-          password: ${{ secrets.docker }}  # PAT als Secret im Repo
+          password: ${{ secrets.DOCKER }}  # PAT als Secret im Repo
 
       # 3) Docker Image bauen
       - name: Build Docker image
