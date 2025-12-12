@@ -44,9 +44,8 @@ jobs:
 
       - name: Login to OpenShift
         run: |
-          oc login ${{ secrets.OPENSHIFT_URL }} \
-          --token=${{ secrets.OPENSHIFT_TOKEN }} \
-          --insecure-skip-tls-verify
+          oc login --token=${{ secrets.openshift_token }} --server=https://api.exoscale-ch-gva-2-0.appuio.cloud:6443
+
 
       - name: Restart Deployment
         run: |
