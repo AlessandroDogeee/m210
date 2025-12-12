@@ -24,7 +24,7 @@ jobs:
         with:
           registry: ghcr.io
           username: alessandrodogeee
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.docker }}
 
 
       # 3) build the container
