@@ -23,8 +23,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_PAT }}
+          username: alessandrodogeee
+          password: ${{ secrets.GITHUB_TOKEN }}
 
 
       # 3) build the container
