@@ -26,16 +26,6 @@ jobs:
           username: alessandrodogeee   # dein GitHub Username
           password: ${{ secrets.DOCKER }}  # PAT als Secret im Repo
 
-      # 3) Docker Image bauen
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/alessandrodogeee/html-openshift-app:latest .
-
-      # 4) Docker Image pushen
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/alessandrodogeee/html-openshift-app:latest
-
       - name: Install oc
         run: |
           curl -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
@@ -45,11 +35,17 @@ jobs:
       - name: Login to OpenShift
         run: |
           oc login --token=${{ secrets.openshift_token }} --server=https://api.exoscale-ch-gva-2-0.appuio.cloud:6443
+      # 3) Docker Image bauen
+      - name: Build Docker image
+        run: |
+          docker build -t ghcr.io/alessandrodogeee/html-openshift-app:v1 .
 
+      # 4) Docker Image pushen
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/alessandrodogeee/html-openshift-app:v1
 
       - name: Restart Deployment
         run: |
           oc apply -f deployment-file --recursive
           oc rollout restart deployment/html-openshift-app
-
-
