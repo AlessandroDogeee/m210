@@ -35,3 +35,20 @@ jobs:
       - name: Push Docker image
         run: |
           docker push ghcr.io/alessandrodogeee/html-openshift-app:v1
+
+      - name: Install oc
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest/openshift-client-linux.tar.gz -o oc.tar.gz
+          tar -xzf oc.tar.gz
+          sudo mv oc /usr/local/bin/
+
+      - name: Login to OpenShift
+        run: |
+          oc login --token=${{ secrets.openshift_token }} --server=https://api.exoscale-ch-gva-2-0.appuio.cloud:6443
+
+
+      - name: Restart Deployment
+        run: |
+          oc rollout restart deployment/html-openshift-app
+
+
