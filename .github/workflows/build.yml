@@ -14,26 +14,24 @@ jobs:
       packages: write
 
     steps:
-      # 1) checkout code
+      # 1) Repository auschecken
       - name: Check out repository
         uses: actions/checkout@v3
 
-      # 2) login to GitHub Container Registry
+      # 2) Login zu GitHub Container Registry
       - name: Log in to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.docker }}
+          username: alessandrodogeee   # dein GitHub Username
+          password: ${{ secrets.docker }}  # PAT als Secret im Repo
 
-
-      # 3) build the container
+      # 3) Docker Image bauen
       - name: Build Docker image
         run: |
           docker build -t ghcr.io/alessandrodogeee/html-openshift-app:v1 .
 
-      # 4) push the container
+      # 4) Docker Image pushen
       - name: Push Docker image
         run: |
           docker push ghcr.io/alessandrodogeee/html-openshift-app:v1
-          oc rollout restart deployment/html-openshift-app
