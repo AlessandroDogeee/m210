@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Deploy to OpenShift
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     permissions:
@@ -14,17 +14,25 @@ jobs:
       packages: write
 
     steps:
-      # 1) Repository auschecken
-      - name: Check out repository
+      - name: Checkout
         uses: actions/checkout@v3
 
-      # 2) Login zu GitHub Container Registry
-      - name: Log in to GHCR
+      - name: Login to GHCR
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: alessandrodogeee   # dein GitHub Username
-          password: ${{ secrets.DOCKER }}  # PAT als Secret im Repo
+          username: alessandrodogeee
+          password: ${{ secrets.DOCKER }}
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          docker build -t ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG} .
+
+      - name: Push Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          docker push ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG}
 
       - name: Install oc
         run: |
@@ -35,17 +43,10 @@ jobs:
       - name: Login to OpenShift
         run: |
           oc login --token=${{ secrets.openshift_token }} --server=https://api.exoscale-ch-gva-2-0.appuio.cloud:6443
-      # 3) Docker Image bauen
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/alessandrodogeee/html-openshift-app:v1 .
 
-      # 4) Docker Image pushen
-      - name: Push Docker image
+      - name: Update Deployment Image
         run: |
-          docker push ghcr.io/alessandrodogeee/html-openshift-app:v1
-
-      - name: Restart Deployment
-        run: |
-          oc apply -f deployment-file --recursive
-          oc rollout restart deployment/html-openshift-app
+          IMAGE_TAG=${{ github.sha }}
+          oc set image deployment/html-openshift-app \
+            html-openshift-app=ghcr.io/alessandrodogeee/html-openshift-app:${IMAGE_TAG}
+          oc rollout status deployment/html-openshift-app
